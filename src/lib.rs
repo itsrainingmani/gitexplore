@@ -39,6 +39,6 @@ pub struct Cli {
   #[structopt(short, long)]
   pub debug: bool,
 
-  /// Natural Language Search
+  /// The action or command you're looking for
   pub search_terms: Vec<String>
 }

@@ -2,7 +2,7 @@ use std::env;
 use std::process;
 use structopt::StructOpt;
 
-use git_explore::{Data, Cli};
+use gitexplore::{Data, Cli};
 
 fn main() {
   let cli = Cli::from_args();
