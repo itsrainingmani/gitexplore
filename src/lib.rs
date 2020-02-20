@@ -5,8 +5,8 @@ use structopt::StructOpt;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
   pub primary: Vec<OptionValue>,
-  pub secondary: HashMap<String, Vec<OptionValue>>,
-  pub tertiary: HashMap<String, Vec<OptionValue>>
+  pub secondary: HashMap<String, Vec<OptionValue>>, // dynamic keys
+  pub tertiary: HashMap<String, Vec<OptionValue>> // dynamic keys
 }
 
 impl Data {
@@ -19,6 +19,7 @@ impl Data {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
+/// Use an enum to represent the kinds of option values since it's optional for usage and nb fields to be present in the data
 pub enum OptionValue {
   TierOne {label: String, value: String},
   TierTwo {label: String, value: String, usage: String},
