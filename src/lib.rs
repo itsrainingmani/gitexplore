@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::process;
+use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -12,8 +13,11 @@ pub struct Data {
 impl Data {
   pub fn construct() -> Data {
     let options_str = include_str!("options.json");
-    let v: Data = serde_json::from_str(options_str).unwrap();
-    v
+    let data: Data = serde_json::from_str(options_str).unwrap_or_else(|err| {
+      println!("Internal Data corrupted: {}\nExiting...", err);
+      process::exit(1);
+    });
+    data
   }
 }
 
