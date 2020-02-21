@@ -11,7 +11,7 @@ pub struct Config {
 }
 
 impl Config {
-  pub fn new(cli: Cli) -> Config {
+  pub fn new(cli: Cli) -> Result<Config, &'static str> {
 
     // Data Construction
     let options_str = include_str!("options.json");
@@ -24,8 +24,12 @@ impl Config {
       process::exit(exitcode::SOFTWARE);
     });
 
+    if cli.search_terms.len() < 1 {
+      return Err("No search terms used");
+    }
+
     // We don't worry about the debug field in the Cli struct
-    Config {search: cli.search_terms, data}
+    Ok(Config {search: cli.search_terms, data})
   }
 }
 
