@@ -25,7 +25,7 @@ mod tests {
   }
 
   #[test]
-  fn verify_first_pass_search() {
+  fn first_pass_search_match() {
     let search_terms = vec![
       "add".to_string(), 
       "a".to_string(), 
@@ -37,6 +37,22 @@ mod tests {
     assert_eq!(
       result.is_some(),
       true
+    )
+  }
+
+  #[test]
+  fn first_pass_search_no_match() {
+    let search_terms = vec![
+      "weird".to_string(), 
+      "a".to_string(), 
+      "commit".to_string()
+    ];
+    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+    let result = first_pass(&cfg.search[0], &cfg.data.primary);
+
+    assert_eq!(
+      result.is_some(),
+      false
     )
   }
 }
@@ -77,7 +93,7 @@ pub fn run(cfg: Config) -> Result<String, Box<dyn Error>> {
 fn first_pass<'a>(term: &String, options: &'a Vec<OptionValue>) -> Option<&'a OptionValue> {
   for option in options.iter() {
     match option {
-      OptionValue::TierOne {label, value} => {
+      OptionValue::TierOne { label, value: _ } => {
         if label.contains(term) {
           return Some(option)
         }
