@@ -2,23 +2,38 @@ use std::collections::HashMap;
 use std::process;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
+use exitcode;
+
+#[derive(Debug)]
+pub struct Config {
+  pub search: Vec<String>,
+  pub data: Data
+}
+
+impl Config {
+  pub fn new(cli: Cli) -> Config {
+
+    // Data Construction
+    let options_str = include_str!("options.json");
+    let data: Data = serde_json::from_str(options_str).unwrap_or_else(|err| {
+      // If internal data is corrupted there's no point trying to continue execution or passing the error up the chain.
+      // Write the error msg to stderr
+      eprintln!("Internal Data corrupted: {}\nExiting...", err);
+      
+      // Use the SOFTWARE exit code which indicates that an internal software error has been detected
+      process::exit(exitcode::SOFTWARE);
+    });
+
+    // We don't worry about the debug field in the Cli struct
+    Config {search: cli.search_terms, data}
+  }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
   pub primary: Vec<OptionValue>,
   pub secondary: HashMap<String, Vec<OptionValue>>, // dynamic keys
   pub tertiary: HashMap<String, Vec<OptionValue>> // dynamic keys
-}
-
-impl Data {
-  pub fn construct() -> Data {
-    let options_str = include_str!("options.json");
-    let data: Data = serde_json::from_str(options_str).unwrap_or_else(|err| {
-      println!("Internal Data corrupted: {}\nExiting...", err);
-      process::exit(1);
-    });
-    data
-  }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
