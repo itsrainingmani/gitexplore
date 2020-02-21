@@ -17,9 +17,6 @@ fn main() {
     process::exit(exitcode::USAGE);
   });
 
-  println!("{:?}", config.search);
-  println!("{:?}", config.data.primary);
-
   if let Err(e) = gitexplore::run(config) {
     eprintln!("Application error: {}", e);
     process::exit(exitcode::SOFTWARE);

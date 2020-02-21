@@ -5,6 +5,42 @@ use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
 use exitcode;
 
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn verify_args_length() {
+    let search_terms = vec![
+      "add".to_string(), 
+      "a".to_string(), 
+      "commit".to_string()
+    ];
+    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+
+    assert_eq!(
+      3,
+      cfg.search.len()
+    )
+  }
+
+  #[test]
+  fn verify_first_pass_search() {
+    let search_terms = vec![
+      "add".to_string(), 
+      "a".to_string(), 
+      "commit".to_string()
+    ];
+    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+    let result = first_pass(&cfg.search[0], &cfg.data.primary);
+
+    assert_eq!(
+      result.is_some(),
+      true
+    )
+  }
+}
+
 #[derive(Debug)]
 pub struct Config {
   pub search: Vec<String>,
@@ -37,6 +73,23 @@ impl Config {
 pub fn run(cfg: Config) -> Result<String, Box<dyn Error>> {
   Ok(String::from("Hello"))
 }
+
+fn first_pass<'a>(term: &String, options: &'a Vec<OptionValue>) -> Option<&'a OptionValue> {
+  for option in options.iter() {
+    match option {
+      OptionValue::TierOne {label, value} => {
+        if label.contains(term) {
+          return Some(option)
+        }
+      },
+      _ => (),
+    }
+  }
+
+  None
+}
+
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
