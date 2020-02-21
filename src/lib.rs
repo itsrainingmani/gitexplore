@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::process;
+use std::error::Error;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
 use exitcode;
@@ -31,6 +32,10 @@ impl Config {
     // We don't worry about the debug field in the Cli struct
     Ok(Config {search: cli.search_terms, data})
   }
+}
+
+pub fn run(cfg: Config) -> Result<String, Box<dyn Error>> {
+  Ok(String::from("Hello"))
 }
 
 #[derive(Serialize, Deserialize, Debug)]
