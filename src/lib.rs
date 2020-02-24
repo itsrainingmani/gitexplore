@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, BinaryHeap};
 use std::process;
 use std::error::Error;
 use serde::{Deserialize, Serialize};
@@ -56,18 +56,29 @@ mod tests {
     )
   }
 
-  // #[test]
-  // fn second_pass_search() {
-  //   let search_terms = vec![
-  //     "add".to_string(), 
-  //     "a".to_string(), 
-  //     "commit".to_string()
-  //   ];
-  //   let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
-  //   if let Some(fp_result) = first_pass(&cfg) {
-  //     second_pass(&cfg, fp_result);
-  //   }
-  // }
+  #[test]
+  fn second_pass_test() {
+    let search_terms = vec![
+      "add".to_string(), 
+      "new".to_string(), 
+      "branch".to_string()
+    ];
+    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+    if let Some(fp_result) = first_pass(&cfg) {
+      second_pass(&cfg, fp_result);
+    }
+  }
+
+  #[test]
+  fn combine_test() {
+    let search_terms = vec![
+      "add".to_string(), 
+      "new".to_string(), 
+      "branch".to_string()
+    ];
+    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+    combine_secondary_tertiary(&cfg, &cfg.search[0]);
+  }
 }
 
 #[derive(Debug)]
@@ -120,6 +131,58 @@ fn first_pass<'a>(cfg: &'a Config) -> Option<&'a OptionValue> {
   None
 }
 
+fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Option<&'a Vec<OptionValue>> {
+  let sp_results: Vec<OptionValue> = Vec::new();
+  let terms = &cfg.search[1..];
+  let sec_options = &cfg.data.secondary;
+
+  // Use a Binary Heap to hold the secondary options in order of most word matches
+  // let mut maxheap: BinaryHeap<f32> = BinaryHeap::new();
+
+  // Have to match Enum variants
+  match fp_res {
+    OptionValue::TierOne { label: _ , value } => {
+      // Match on HashMap Option result
+      match sec_options.get(value) {
+        Some(sec) => {
+          // Key is available
+          println!("{:?}", sec);
+        },
+        None => {
+          // No key found in HashMap
+          println!("Not found");
+        }
+      }
+    },
+    _ => (),
+  }
+
+  None
+}
+
+fn combine_secondary_tertiary<'a>(cfg: &'a Config, term: &String) {
+  if let Some(secondary) = &cfg.data.secondary.get(term) {
+    for s in secondary.iter() {
+      println!("{:?}", s);
+      match s {
+        OptionValue::TierOne { label, value } => {
+          // This means there is a tertiary option
+          println!("Tertiary Option available");
+          match &cfg.data.tertiary.get(value) {
+            Some(tertiary_data) => {
+              for t in tertiary_data.iter() {
+                println!("{:?}", t);
+              }
+            },
+            None => ()
+          }
+        },
+        OptionValue::TierTwo {label, value, usage} => println!("{:?}", s),
+        OptionValue::TierThree {label, value, usage, nb} => println!("{:?}", s)
+      }
+    }
+  }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
