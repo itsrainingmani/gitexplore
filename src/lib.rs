@@ -161,13 +161,14 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Option<&'a Vec<O
 }
 
 fn combine_secondary_tertiary<'a>(cfg: &'a Config, term: &String) {
+  let combined_search_terms: Vec<String> = Vec::new();
+
+  // The search term exists in the secondary options data
   if let Some(secondary) = &cfg.data.secondary.get(term) {
     for s in secondary.iter() {
-      println!("{:?}", s);
-      match s {
+      match s { // Match on possible enum variants
         OptionValue::TierOne { label, value } => {
           // This means there is a tertiary option
-          println!("Tertiary Option available");
           match &cfg.data.tertiary.get(value) {
             Some(tertiary_data) => {
               for t in tertiary_data.iter() {
@@ -177,8 +178,7 @@ fn combine_secondary_tertiary<'a>(cfg: &'a Config, term: &String) {
             None => ()
           }
         },
-        OptionValue::TierTwo {label, value, usage} => println!("{:?}", s),
-        OptionValue::TierThree {label, value, usage, nb} => println!("{:?}", s)
+        OptionValue::TierTwo {..} | OptionValue::TierThree {..} => println!("{:?}", s)
       }
     }
   }
