@@ -195,9 +195,9 @@ pub struct Data {
 #[serde(untagged)]
 /// Use an enum to represent the kinds of option values since it's optional for usage and nb fields to be present in the data
 pub enum OptionValue {
-  TierOne {label: String, value: String},
+  TierThree {label: String, value: String, usage: String, nb: String},
   TierTwo {label: String, value: String, usage: String},
-  TierThree {label: String, value: String, usage: String, nb: String}
+  TierOne {label: String, value: String},
 }
 
 #[derive(Debug, StructOpt)]
