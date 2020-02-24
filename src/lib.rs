@@ -32,7 +32,7 @@ mod tests {
       "commit".to_string()
     ];
     let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
-    let result = first_pass(&cfg.search[0], &cfg.data.primary);
+    let result = first_pass(&cfg);
 
     assert_eq!(
       result.is_some(),
@@ -48,13 +48,26 @@ mod tests {
       "commit".to_string()
     ];
     let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
-    let result = first_pass(&cfg.search[0], &cfg.data.primary);
+    let result = first_pass(&cfg);
 
     assert_eq!(
       result.is_some(),
       false
     )
   }
+
+  // #[test]
+  // fn second_pass_search() {
+  //   let search_terms = vec![
+  //     "add".to_string(), 
+  //     "a".to_string(), 
+  //     "commit".to_string()
+  //   ];
+  //   let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+  //   if let Some(fp_result) = first_pass(&cfg) {
+  //     second_pass(&cfg, fp_result);
+  //   }
+  // }
 }
 
 #[derive(Debug)]
@@ -90,7 +103,9 @@ pub fn run(cfg: Config) -> Result<String, Box<dyn Error>> {
   Ok(String::from("Hello"))
 }
 
-fn first_pass<'a>(term: &String, options: &'a Vec<OptionValue>) -> Option<&'a OptionValue> {
+fn first_pass<'a>(cfg: &'a Config) -> Option<&'a OptionValue> {
+  let term = &cfg.search[0];
+  let options = &cfg.data.primary;
   for option in options.iter() {
     match option {
       OptionValue::TierOne { label, value: _ } => {
@@ -104,7 +119,6 @@ fn first_pass<'a>(term: &String, options: &'a Vec<OptionValue>) -> Option<&'a Op
 
   None
 }
-
 
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -126,6 +140,7 @@ pub enum OptionValue {
 #[derive(Debug, StructOpt)]
 /// Welcome to the Git Explore CLI,
 /// where you can search for git commands with natural language
+/// Example usage: $gitexplore add new commit
 pub struct Cli {
   /// Activate debug mode
   // short and long flags (-d, --debug) will be deduced from the field's name
