@@ -25,6 +25,46 @@ mod tests {
   }
 
   #[test]
+  fn verify_lowercase() {
+    let search_terms = vec![
+      "AdD".to_string(), 
+      "A".to_string(),
+    ];
+    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+
+    assert_eq!(
+      vec![
+        "add".to_string(),
+        "a".to_string(),
+      ],
+      cfg.search
+    )
+  }
+
+  #[test]
+  fn verify_stripping_articles() {
+    let search_terms = vec![
+      "add".to_string(), 
+      "a".to_string(),
+      "commit".to_string(),
+      "to".to_string(),
+      "the".to_string(),
+      "repo".to_string()
+    ];
+    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+
+    assert_eq!(
+      vec![
+        "add".to_string(),
+        "commit".to_string(),
+        "to".to_string(),
+        "repo".to_string()
+      ],
+      cfg.search
+    )
+  }
+
+  #[test]
   fn first_pass_search_match() {
     let search_terms = vec![
       "add".to_string(), 
@@ -125,9 +165,21 @@ impl Config {
       return Err("No search terms used");
     }
 
+    // Transform all search terms into lowercase
+    // Strip search term vector of articles - a, an, the
+    let new_search_terms: Vec<String> = cli.search_terms.clone()
+                                                        .iter()
+                                                        .map(|x| x.to_lowercase())
+                                                        .filter(|x| is_article(x))
+                                                        .collect();
+
     // We don't worry about the debug field in the Cli struct
-    Ok(Config {search: cli.search_terms, data})
+    Ok(Config {search: new_search_terms, data})
   }
+}
+
+fn is_article(x: &String) -> bool {
+  return *x != "a" && *x != "an" && *x != "the" 
 }
 
 pub fn run(cfg: Config) -> Result<String, Box<dyn Error>> {
