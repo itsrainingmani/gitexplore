@@ -19,7 +19,7 @@ mod tests {
     let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
 
     assert_eq!(
-      3,
+      2,
       cfg.search.len()
     )
   }
@@ -28,14 +28,14 @@ mod tests {
   fn verify_lowercase() {
     let search_terms = vec![
       "AdD".to_string(), 
-      "A".to_string(),
+      "ComMit".to_string(),
     ];
     let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
 
     assert_eq!(
       vec![
         "add".to_string(),
-        "a".to_string(),
+        "commit".to_string(),
       ],
       cfg.search
     )
