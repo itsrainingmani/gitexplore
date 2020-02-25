@@ -81,12 +81,12 @@
     "commit": [
       {
         "value": "local-changes",
-        "label": "commit all local changes in tracked files",
+        "label": "all local changes in tracked files",
         "usage": "git commit -a"
       },
       {
         "value": "staged-changes",
-        "label": "commit all staged changes",
+        "label": "all staged changes",
         "usage": "git commit -m <message>",
         "nb": "Replace <message> with your commit message."
       }

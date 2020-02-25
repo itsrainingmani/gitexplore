@@ -79,6 +79,26 @@ mod tests {
     let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
     combine_secondary_tertiary(&cfg, &cfg.search[0]);
   }
+
+  #[test]
+  fn combine_test_commit() {
+    let search_terms = vec![
+      "commit".to_string(), 
+      "changes".to_string()
+    ];
+    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+    combine_secondary_tertiary(&cfg, &cfg.search[0]);
+  }
+
+  #[test]
+  fn combine_test_logs() {
+    let search_terms = vec![
+      "show".to_string(), 
+      "all".to_string()
+    ];
+    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+    combine_secondary_tertiary(&cfg, &cfg.search[0]);
+  }
 }
 
 #[derive(Debug)]
@@ -157,27 +177,40 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Option<&'a Vec<O
 }
 
 fn combine_secondary_tertiary<'a>(cfg: &'a Config, term: &String) {
-  let combined_search_terms: Vec<String> = Vec::new();
+  let mut combined_search_terms: Vec<String> = Vec::new();
 
   // The search term exists in the secondary options data
   if let Some(secondary) = &cfg.data.secondary.get(term) {
     for s in secondary.iter() {
-      match s { // Match on possible enum variants
+      
+      // Match on possible enum variants
+      match s {
+        // This means there is a tertiary option
         OptionValue::TierOne { label, value } => {
-          // This means there is a tertiary option
           match &cfg.data.tertiary.get(value) {
             Some(tertiary_data) => {
+              
+              // Loop through the tertiary items for the key
+              // and append the label to the corresponding secondary item label
+              // Add this concatenated label to the combined_search_terms vec
               for t in tertiary_data.iter() {
-                println!("{:?}", t);
+                let t_label = t.get_label();
+                let combined_label = term.clone() + " " + &label.clone() + " " + &t_label.clone();
+                combined_search_terms.push(combined_label);
               }
             },
             None => ()
           }
         },
-        OptionValue::TierTwo {..} | OptionValue::TierThree {..} => println!("{:?}", s)
+        _ => {
+          let s_label = s.get_label();
+          combined_search_terms.push(term.clone() + " " + &s_label.clone());
+        }
       }
     }
   }
+
+  println!("{:?}", combined_search_terms);
 }
 
 #[derive(Serialize, Deserialize, Debug)]
