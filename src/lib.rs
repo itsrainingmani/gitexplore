@@ -112,32 +112,17 @@ mod tests {
   #[test]
   fn combine_test() {
     let search_terms = vec![
-      "add".to_string(), 
-      "new".to_string(), 
+      "add".to_string(),
+      "new".to_string(),
       "branch".to_string()
     ];
     let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
-    combine_secondary_tertiary(&cfg, &cfg.search[0]);
-  }
 
-  #[test]
-  fn combine_test_commit() {
-    let search_terms = vec![
-      "commit".to_string(), 
-      "changes".to_string()
-    ];
-    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
+    println!("\nAdd Test");
     combine_secondary_tertiary(&cfg, &cfg.search[0]);
-  }
 
-  #[test]
-  fn combine_test_logs() {
-    let search_terms = vec![
-      "show".to_string(), 
-      "all".to_string()
-    ];
-    let cfg = Config::new(Cli {debug: false, search_terms}).unwrap();
-    combine_secondary_tertiary(&cfg, &cfg.search[0]);
+    println!("\nShow Test");
+    combine_secondary_tertiary(&cfg, &String::from("show"));
   }
 }
 
