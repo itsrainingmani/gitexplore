@@ -118,13 +118,9 @@ fn first_pass<'a>(cfg: &'a Config) -> Option<&'a OptionValue> {
   let term = &cfg.search[0];
   let options = &cfg.data.primary;
   for option in options.iter() {
-    match option {
-      OptionValue::TierOne { label, value: _ } => {
-        if label.contains(term) {
-          return Some(option)
-        }
-      },
-      _ => (),
+    let label = option.get_label();
+    if label.contains(term) {
+      return Some(option);
     }
   }
 
@@ -198,6 +194,25 @@ pub enum OptionValue {
   TierThree {label: String, value: String, usage: String, nb: String},
   TierTwo {label: String, value: String, usage: String},
   TierOne {label: String, value: String},
+}
+
+// Impl block for getter methods
+impl OptionValue {
+  fn get_label(&self) -> &String {
+    match self {
+      OptionValue::TierOne {label, ..} | OptionValue::TierTwo {label, ..} | OptionValue::TierThree {label, ..} => {
+        return &label;
+      }
+    }
+  }
+
+  fn get_value(&self) -> &String {
+    match self {
+      OptionValue::TierOne {value, ..} | OptionValue::TierTwo {value, ..} | OptionValue::TierThree {value, ..} => {
+        return &value;
+      }
+    }
+  }
 }
 
 #[derive(Debug, StructOpt)]
