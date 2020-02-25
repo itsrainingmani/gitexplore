@@ -195,7 +195,7 @@ fn combine_secondary_tertiary<'a>(cfg: &'a Config, term: &String) {
               // Add this concatenated label to the combined_search_terms vec
               for t in tertiary_data.iter() {
                 let t_label = t.get_label();
-                let combined_label = term.clone() + " " + &label.clone() + " " + &t_label.clone();
+                let combined_label = [term.clone(), label.clone(), t_label.clone()].join(" ");
                 combined_search_terms.push(combined_label);
               }
             },
@@ -204,7 +204,7 @@ fn combine_secondary_tertiary<'a>(cfg: &'a Config, term: &String) {
         },
         _ => {
           let s_label = s.get_label();
-          combined_search_terms.push(term.clone() + " " + &s_label.clone());
+          combined_search_terms.push([term.clone(), s_label.clone()].join(" "));
         }
       }
     }
