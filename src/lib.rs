@@ -154,6 +154,87 @@ mod tests {
   }
 }
 
+#[derive(Debug, StructOpt)]
+/// Welcome to the Git Explore CLI,
+/// where you can search for git commands with natural language
+///
+/// EXAMPLE:
+///
+/// $ gitexplore compare two commits
+///           
+/// The closest matching command that can compare two commits is
+///                  
+/// "git diff <sha1> <sha2> | less"
+pub struct Cli {
+  /// Activate verbose mode
+  #[structopt(short, long)]
+  pub verbose: bool,
+
+  /// The action or command you're looking for
+  pub search_terms: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+struct SearchData {
+  score: i8,
+  pattern: String,
+  option: OptionValue,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Data {
+  pub primary: Vec<OptionValue>,
+  pub secondary: HashMap<String, Vec<OptionValue>>, // dynamic keys
+  pub tertiary: HashMap<String, Vec<OptionValue>>,  // dynamic keys
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(untagged)]
+/// Use an enum to represent the kinds of option values since it's optional for usage and nb fields to be present in the data
+pub enum OptionValue {
+  TierThree {
+    label: String,
+    value: String,
+    usage: String,
+    nb: String,
+  },
+  TierTwo {
+    label: String,
+    value: String,
+    usage: String,
+  },
+  TierOne {
+    label: String,
+    value: String,
+  },
+}
+
+// Impl block for getter methods
+impl OptionValue {
+  fn get_label(&self) -> &String {
+    match self {
+      OptionValue::TierOne { label, .. }
+      | OptionValue::TierTwo { label, .. }
+      | OptionValue::TierThree { label, .. } => &label,
+    }
+  }
+
+  fn get_value(&self) -> &String {
+    match self {
+      OptionValue::TierOne { value, .. }
+      | OptionValue::TierTwo { value, .. }
+      | OptionValue::TierThree { value, .. } => &value,
+    }
+  }
+
+  fn get_usage(&self) -> &String {
+    match self {
+      OptionValue::TierTwo { usage, .. } | OptionValue::TierThree { usage, .. } => &usage,
+      OptionValue::TierOne { value, .. } => &value,
+    }
+  }
+}
+
 #[derive(Debug)]
 pub struct Config {
   pub search: Vec<String>,
@@ -297,13 +378,6 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) {
   }
 }
 
-#[derive(Debug, Clone)]
-struct SearchData {
-  score: i8,
-  pattern: String,
-  option: OptionValue,
-}
-
 fn combined_options<'a>(cfg: &'a Config, term: &String) -> Vec<(String, &'a OptionValue)> {
   let mut combined_search_terms: Vec<(String, &OptionValue)> = Vec::new();
 
@@ -337,78 +411,4 @@ fn combined_options<'a>(cfg: &'a Config, term: &String) -> Vec<(String, &'a Opti
   }
 
   combined_search_terms
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Data {
-  pub primary: Vec<OptionValue>,
-  pub secondary: HashMap<String, Vec<OptionValue>>, // dynamic keys
-  pub tertiary: HashMap<String, Vec<OptionValue>>,  // dynamic keys
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(untagged)]
-/// Use an enum to represent the kinds of option values since it's optional for usage and nb fields to be present in the data
-pub enum OptionValue {
-  TierThree {
-    label: String,
-    value: String,
-    usage: String,
-    nb: String,
-  },
-  TierTwo {
-    label: String,
-    value: String,
-    usage: String,
-  },
-  TierOne {
-    label: String,
-    value: String,
-  },
-}
-
-// Impl block for getter methods
-impl OptionValue {
-  fn get_label(&self) -> &String {
-    match self {
-      OptionValue::TierOne { label, .. }
-      | OptionValue::TierTwo { label, .. }
-      | OptionValue::TierThree { label, .. } => &label,
-    }
-  }
-
-  fn get_value(&self) -> &String {
-    match self {
-      OptionValue::TierOne { value, .. }
-      | OptionValue::TierTwo { value, .. }
-      | OptionValue::TierThree { value, .. } => &value,
-    }
-  }
-
-  fn get_usage(&self) -> &String {
-    match self {
-      OptionValue::TierTwo { usage, .. } | OptionValue::TierThree { usage, .. } => &usage,
-      OptionValue::TierOne { value, .. } => &value,
-    }
-  }
-}
-
-#[derive(Debug, StructOpt)]
-/// Welcome to the Git Explore CLI,
-/// where you can search for git commands with natural language
-///
-/// EXAMPLE:
-///
-/// $ gitexplore compare two commits
-///           
-/// The closest matching command that can compare two commits is
-///                  
-/// "git diff <sha1> <sha2> | less"
-pub struct Cli {
-  /// Activate verbose mode
-  #[structopt(short, long)]
-  pub verbose: bool,
-
-  /// The action or command you're looking for
-  pub search_terms: Vec<String>,
 }
