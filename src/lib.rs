@@ -1,6 +1,6 @@
 use exitcode;
 use serde::{Deserialize, Serialize};
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::HashMap;
 use std::process;
 use structopt::StructOpt;
 
@@ -87,7 +87,13 @@ mod tests {
 
   #[test]
   fn second_pass_test() {
-    let search_terms = vec!["add".to_string(), "new".to_string(), "branch".to_string()];
+    let search_terms = vec![
+      "add".to_string(),
+      "new".to_string(),
+      "branch".to_string(),
+      "remain".to_string(),
+      "current".to_string(),
+    ];
     let cfg = Config::new(Cli {
       debug: false,
       search_terms,
@@ -108,11 +114,11 @@ mod tests {
     .unwrap();
 
     println!("\nAdd Test");
-    let add_terms = combine_secondary_tertiary(&cfg, &cfg.search[0]);
+    let add_terms = combined_options(&cfg, &cfg.search[0]);
     println!("{:?}", add_terms);
 
     println!("\nShow Test");
-    let show_terms = combine_secondary_tertiary(&cfg, &String::from("show"));
+    let show_terms = combined_options(&cfg, &String::from("show"));
     println!("{:?}", show_terms);
   }
 }
@@ -187,36 +193,45 @@ fn first_pass<'a>(cfg: &'a Config) -> Option<&'a OptionValue> {
   None
 }
 
-fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Option<&'a Vec<OptionValue>> {
-  let sp_results: Vec<OptionValue> = Vec::new();
-  let terms = &cfg.search[1..];
-  let sec_options = &cfg.data.secondary;
+fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Option<&'a OptionValue> {
+  let fp_label = fp_res.get_label();
+  let possible_options = combined_options(&cfg, &fp_label);
 
-  // Use a Binary Heap to hold the secondary options in order of most word matches
-  let mut maxheap: BinaryHeap<i8> = BinaryHeap::new();
+  let cli_terms = &cfg.search;
 
-  // Have to match Enum variants
-  match fp_res {
-    OptionValue::TierOne { label: _, value } => {
-      // Match on HashMap Option result
-      match sec_options.get(value) {
-        Some(sec) => {
-          // Key is available
-          println!("{:?}", sec);
-        }
-        None => {
-          // No key found in HashMap
-          println!("Not found");
-        }
+  // This data structure will allow us to weight possible options by a score
+  let mut search_data: Vec<SearchData> = Vec::new();
+
+  // Iterate through the possible combined options
+  for opts in possible_options.iter() {
+    let mut current_search = SearchData {
+      score: 0,
+      pattern: (*opts).clone(),
+    };
+
+    // For each search term, check if it's present in the current option
+    // If it is, incrememnt the score for that option by 1
+    for term in cli_terms.iter() {
+      if opts.contains(term) {
+        current_search.score += 1;
       }
     }
-    _ => (),
+    search_data.push(current_search);
   }
+
+  search_data.sort_by(|a, b| b.score.cmp(&a.score));
+  println!("{:?}", search_data);
 
   None
 }
 
-fn combine_secondary_tertiary<'a>(cfg: &'a Config, term: &String) -> Vec<String> {
+#[derive(Debug)]
+struct SearchData {
+  score: i8,
+  pattern: String,
+}
+
+fn combined_options<'a>(cfg: &'a Config, term: &String) -> Vec<String> {
   let mut combined_search_terms: Vec<String> = Vec::new();
 
   // The search term exists in the secondary options data
