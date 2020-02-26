@@ -283,7 +283,49 @@ pub fn run(cfg: Config) -> Result<String, &'static str> {
   let fp_res = first_pass(&cfg);
 
   match fp_res {
-    Some(fp) => second_pass(&cfg, &fp),
+    Some(fp) => {
+      let search_data = second_pass(&cfg, &fp);
+      match search_data.first() {
+        Some(top_search) => {
+          // Check confidence in score
+          let top_score = top_search.score;
+          // if top_score < top_search.pattern.split(' ').count() as i8 {
+          //   println!("Low confidence in match");
+          // }
+
+          // If there is some top value
+          // Check if there are more values with the same score
+          let num_top_values: Vec<_> = search_data
+            .iter()
+            .filter(|x| x.score == top_score)
+            .map(|x| &x.option)
+            .collect();
+
+          if num_top_values.len() > 1 {
+            println!("\nLooks there is more than one command that matches what you searched for!");
+            println!("\nEnumerating partially matching commands");
+            for (i, top_val) in num_top_values.iter().enumerate() {
+              println!("\n\t{}. {:?}", i + 1, *top_val.get_usage());
+              match &top_val {
+                OptionValue::TierThree { nb, .. } => println!("\t{}\n", nb),
+                _ => (),
+              }
+            }
+          } else {
+            println!(
+              "\nMatching git cmd for \"{}\" found! 🎉 - \n\n\t{:?}",
+              cfg.search.join(" "),
+              top_search.option.get_usage()
+            );
+            match &top_search.option {
+              OptionValue::TierThree { nb, .. } => println!("\t{}\n", nb),
+              _ => (),
+            }
+          }
+        }
+        None => return Err("No matching commands found"),
+      }
+    }
     None => return Err("Invalid search term"),
   }
 
@@ -303,7 +345,7 @@ fn first_pass<'a>(cfg: &'a Config) -> Option<&'a OptionValue> {
   None
 }
 
-fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) {
+fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Vec<SearchData> {
   // Use value since that is the key for secondary and tertiary options
   let fp_value = fp_res.get_value();
   let possible_options = combined_options(&cfg, &fp_value);
@@ -336,46 +378,7 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) {
   search_data.sort_by(|a, b| b.score.cmp(&a.score));
   // println!("{:?}", search_data);
 
-  match search_data.first() {
-    Some(top_search) => {
-      // Check confidence in score
-      let top_score = top_search.score;
-      // if top_score < top_search.pattern.split(' ').count() as i8 {
-      //   println!("Low confidence in match");
-      // }
-
-      // If there is some top value
-      // Check if there are more values with the same score
-      let num_top_values: Vec<_> = search_data
-        .iter()
-        .filter(|x| x.score == top_score)
-        .map(|x| &x.option)
-        .collect();
-
-      if num_top_values.len() > 1 {
-        println!("\nLooks there is more than one command that matches what you searched for!");
-        println!("\nEnumerating partially matching commands");
-        for (i, top_val) in num_top_values.iter().enumerate() {
-          println!("\n\t{}. {:?}", i + 1, *top_val.get_usage());
-          match &top_val {
-            OptionValue::TierThree { nb, .. } => println!("\t{}\n", nb),
-            _ => (),
-          }
-        }
-      } else {
-        println!(
-          "\nMatching git cmd for \"{}\" found! 🎉 - \n\n\t{:?}",
-          cfg.search.join(" "),
-          top_search.option.get_usage()
-        );
-        match &top_search.option {
-          OptionValue::TierThree { nb, .. } => println!("\t{}\n", nb),
-          _ => (),
-        }
-      }
-    }
-    None => (),
-  }
+  search_data
 }
 
 fn combined_options<'a>(cfg: &'a Config, term: &String) -> Vec<(String, &'a OptionValue)> {
