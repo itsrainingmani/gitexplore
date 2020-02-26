@@ -235,16 +235,16 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Option<&'a Optio
   let mut search_data: Vec<SearchData> = Vec::new();
 
   // Iterate through the possible combined options
-  for opts in possible_options.iter() {
+  for (opt_str, _opt_val) in possible_options.iter() {
     let mut current_search = SearchData {
       score: 0,
-      pattern: (*opts).clone(),
+      pattern: (*opt_str).clone(),
     };
 
     // For each search term, check if it's present in the current option
     // If it is, incrememnt the score for that option by 1
     for term in cli_terms.iter() {
-      if opts.contains(term) {
+      if opt_str.contains(term) {
         current_search.score += 1;
       }
     }
@@ -263,8 +263,8 @@ struct SearchData {
   pattern: String,
 }
 
-fn combined_options<'a>(cfg: &'a Config, term: &String) -> Vec<String> {
-  let mut combined_search_terms: Vec<String> = Vec::new();
+fn combined_options<'a>(cfg: &'a Config, term: &String) -> Vec<(String, &'a OptionValue)> {
+  let mut combined_search_terms: Vec<(String, &OptionValue)> = Vec::new();
 
   // The search term exists in the secondary options data
   if let Some(secondary) = &cfg.data.secondary.get(term) {
@@ -281,7 +281,7 @@ fn combined_options<'a>(cfg: &'a Config, term: &String) -> Vec<String> {
               for t in tertiary_data.iter() {
                 let t_label = t.get_label();
                 let combined_label = [term.clone(), label.clone(), t_label.clone()].join(" ");
-                combined_search_terms.push(combined_label);
+                combined_search_terms.push((combined_label, t));
               }
             }
             None => (),
@@ -289,7 +289,7 @@ fn combined_options<'a>(cfg: &'a Config, term: &String) -> Vec<String> {
         }
         _ => {
           let s_label = s.get_label();
-          combined_search_terms.push([term.clone(), s_label.clone()].join(" "));
+          combined_search_terms.push(([term.clone(), s_label.clone()].join(" "), s));
         }
       }
     }
