@@ -269,7 +269,11 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) {
       if num_top_values.len() > 1 {
         println!("\nLooks there is more than one command that matches what you searched for");
       } else {
-        println!("The closest matching command is - {:?}", top_search.option);
+        println!(
+          "\nThe closest matching command that can {} is \n\n\t{:?}",
+          cfg.search.join(" "),
+          top_search.option.get_usage()
+        );
       }
     }
     None => (),
@@ -352,9 +356,7 @@ impl OptionValue {
     match self {
       OptionValue::TierOne { label, .. }
       | OptionValue::TierTwo { label, .. }
-      | OptionValue::TierThree { label, .. } => {
-        return &label;
-      }
+      | OptionValue::TierThree { label, .. } => &label,
     }
   }
 
@@ -362,9 +364,14 @@ impl OptionValue {
     match self {
       OptionValue::TierOne { value, .. }
       | OptionValue::TierTwo { value, .. }
-      | OptionValue::TierThree { value, .. } => {
-        return &value;
-      }
+      | OptionValue::TierThree { value, .. } => &value,
+    }
+  }
+
+  fn get_usage(&self) -> &String {
+    match self {
+      OptionValue::TierTwo { usage, .. } | OptionValue::TierThree { usage, .. } => &usage,
+      OptionValue::TierOne { value, .. } => &value,
     }
   }
 }
@@ -372,7 +379,12 @@ impl OptionValue {
 #[derive(Debug, StructOpt)]
 /// Welcome to the Git Explore CLI,
 /// where you can search for git commands with natural language
-/// Example usage: $gitexplore add new commit
+///
+/// EXAMPLE $ gitexplore compare two commits
+///           
+/// The closest matching command that can compare two commits is
+///                  
+/// "git diff <sha1> <sha2> | less"
 pub struct Cli {
   /// Activate debug mode
   // short and long flags (-d, --debug) will be deduced from the field's name
