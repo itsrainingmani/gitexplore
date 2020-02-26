@@ -202,9 +202,7 @@ pub fn run(cfg: Config) -> Result<String, &'static str> {
   let fp_res = first_pass(&cfg);
 
   match fp_res {
-    Some(fp) => {
-      let _sp_res = second_pass(&cfg, &fp);
-    }
+    Some(fp) => second_pass(&cfg, &fp),
     None => return Err("Invalid search term"),
   }
 
@@ -224,7 +222,7 @@ fn first_pass<'a>(cfg: &'a Config) -> Option<&'a OptionValue> {
   None
 }
 
-fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Option<&'a OptionValue> {
+fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) {
   // Use value since that is the key for secondary and tertiary options
   let fp_value = fp_res.get_value();
   let possible_options = combined_options(&cfg, &fp_value);
@@ -235,10 +233,12 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Option<&'a Optio
   let mut search_data: Vec<SearchData> = Vec::new();
 
   // Iterate through the possible combined options
-  for (opt_str, _opt_val) in possible_options.iter() {
+  for (opt_str, opt_val) in possible_options.iter() {
+    let opt_val_clone = (**opt_val).clone();
     let mut current_search = SearchData {
       score: 0,
       pattern: (*opt_str).clone(),
+      option: opt_val_clone,
     };
 
     // For each search term, check if it's present in the current option
@@ -251,16 +251,36 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Option<&'a Optio
     search_data.push(current_search);
   }
 
+  // Sort the collated data in descending order of score
   search_data.sort_by(|a, b| b.score.cmp(&a.score));
-  println!("{:?}", search_data);
+  // println!("{:?}", search_data);
 
-  None
+  match search_data.first() {
+    Some(top_search) => {
+      // If there is some top value
+      // Check if there are more values with the same score
+      let top_score = top_search.score;
+      let num_top_values: Vec<_> = search_data
+        .iter()
+        .filter(|x| x.score == top_score)
+        .map(|x| &x.option)
+        .collect();
+
+      if num_top_values.len() > 1 {
+        println!("\nLooks there is more than one command that matches what you searched for");
+      } else {
+        println!("The closest matching command is - {:?}", top_search.option);
+      }
+    }
+    None => (),
+  }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct SearchData {
   score: i8,
   pattern: String,
+  option: OptionValue,
 }
 
 fn combined_options<'a>(cfg: &'a Config, term: &String) -> Vec<(String, &'a OptionValue)> {
@@ -305,7 +325,7 @@ pub struct Data {
   pub tertiary: HashMap<String, Vec<OptionValue>>,  // dynamic keys
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
 /// Use an enum to represent the kinds of option values since it's optional for usage and nb fields to be present in the data
 pub enum OptionValue {
