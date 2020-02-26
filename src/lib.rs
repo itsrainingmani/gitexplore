@@ -73,6 +73,19 @@ mod tests {
   }
 
   #[test]
+  fn first_pass_search_delete() {
+    let search_terms = vec!["delete".to_string(), "a".to_string(), "branch".to_string()];
+    let cfg = Config::new(Cli {
+      debug: false,
+      search_terms,
+    })
+    .unwrap();
+    let result = first_pass(&cfg);
+
+    assert_eq!(result.is_some(), true)
+  }
+
+  #[test]
   fn first_pass_search_no_match() {
     let search_terms = vec!["weird".to_string(), "a".to_string(), "commit".to_string()];
     let cfg = Config::new(Cli {
@@ -105,6 +118,20 @@ mod tests {
   }
 
   #[test]
+  fn second_pass_delete_test() {
+    let search_terms = vec!["delete".to_string(), "a".to_string(), "branch".to_string()];
+    let cfg = Config::new(Cli {
+      debug: false,
+      search_terms,
+    })
+    .unwrap();
+    if let Some(fp_result) = first_pass(&cfg) {
+      println!("{:?}", fp_result);
+      second_pass(&cfg, fp_result);
+    }
+  }
+
+  #[test]
   fn combine_test() {
     let search_terms = vec!["add".to_string(), "new".to_string(), "branch".to_string()];
     let cfg = Config::new(Cli {
@@ -119,6 +146,10 @@ mod tests {
 
     println!("\nShow Test");
     let show_terms = combined_options(&cfg, &String::from("show"));
+    println!("{:?}", show_terms);
+
+    println!("\nDelete Test");
+    let show_terms = combined_options(&cfg, &String::from("delete"));
     println!("{:?}", show_terms);
   }
 }
@@ -194,8 +225,9 @@ fn first_pass<'a>(cfg: &'a Config) -> Option<&'a OptionValue> {
 }
 
 fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) -> Option<&'a OptionValue> {
-  let fp_label = fp_res.get_label();
-  let possible_options = combined_options(&cfg, &fp_label);
+  // Use value since that is the key for secondary and tertiary options
+  let fp_value = fp_res.get_value();
+  let possible_options = combined_options(&cfg, &fp_value);
 
   let cli_terms = &cfg.search;
 
