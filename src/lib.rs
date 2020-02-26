@@ -12,7 +12,7 @@ mod tests {
   fn verify_args_length() {
     let search_terms = vec!["add".to_string(), "a".to_string(), "commit".to_string()];
     let cfg = Config::new(Cli {
-      debug: false,
+      verbose: false,
       search_terms,
     })
     .unwrap();
@@ -24,7 +24,7 @@ mod tests {
   fn verify_lowercase() {
     let search_terms = vec!["AdD".to_string(), "ComMit".to_string()];
     let cfg = Config::new(Cli {
-      debug: false,
+      verbose: false,
       search_terms,
     })
     .unwrap();
@@ -43,7 +43,7 @@ mod tests {
       "repo".to_string(),
     ];
     let cfg = Config::new(Cli {
-      debug: false,
+      verbose: false,
       search_terms,
     })
     .unwrap();
@@ -63,7 +63,7 @@ mod tests {
   fn first_pass_search_match() {
     let search_terms = vec!["add".to_string(), "a".to_string(), "commit".to_string()];
     let cfg = Config::new(Cli {
-      debug: false,
+      verbose: false,
       search_terms,
     })
     .unwrap();
@@ -76,7 +76,7 @@ mod tests {
   fn first_pass_search_delete() {
     let search_terms = vec!["delete".to_string(), "a".to_string(), "branch".to_string()];
     let cfg = Config::new(Cli {
-      debug: false,
+      verbose: false,
       search_terms,
     })
     .unwrap();
@@ -89,7 +89,7 @@ mod tests {
   fn first_pass_search_no_match() {
     let search_terms = vec!["weird".to_string(), "a".to_string(), "commit".to_string()];
     let cfg = Config::new(Cli {
-      debug: false,
+      verbose: false,
       search_terms,
     })
     .unwrap();
@@ -108,7 +108,7 @@ mod tests {
       "current".to_string(),
     ];
     let cfg = Config::new(Cli {
-      debug: false,
+      verbose: false,
       search_terms,
     })
     .unwrap();
@@ -121,7 +121,7 @@ mod tests {
   fn second_pass_delete_test() {
     let search_terms = vec!["delete".to_string(), "a".to_string(), "branch".to_string()];
     let cfg = Config::new(Cli {
-      debug: false,
+      verbose: false,
       search_terms,
     })
     .unwrap();
@@ -135,7 +135,7 @@ mod tests {
   fn combine_test() {
     let search_terms = vec!["add".to_string(), "new".to_string(), "branch".to_string()];
     let cfg = Config::new(Cli {
-      debug: false,
+      verbose: false,
       search_terms,
     })
     .unwrap();
@@ -186,7 +186,7 @@ impl Config {
       .filter(|x| not_article(x))
       .collect();
 
-    // We don't worry about the debug field in the Cli struct
+    // We don't worry about the verbose field in the Cli struct
     Ok(Config {
       search: new_search_terms,
       data,
@@ -257,9 +257,14 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) {
 
   match search_data.first() {
     Some(top_search) => {
+      // Check confidence in score
+      let top_score = top_search.score;
+      // if top_score < top_search.pattern.split(' ').count() as i8 {
+      //   println!("Low confidence in match");
+      // }
+
       // If there is some top value
       // Check if there are more values with the same score
-      let top_score = top_search.score;
       let num_top_values: Vec<_> = search_data
         .iter()
         .filter(|x| x.score == top_score)
@@ -268,12 +273,24 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) {
 
       if num_top_values.len() > 1 {
         println!("\nLooks there is more than one command that matches what you searched for");
+        println!("\nEnumerating partially matching commands");
+        for top_val in num_top_values.iter() {
+          println!("\n\t{:?}", *top_val.get_usage());
+          match &top_val {
+            OptionValue::TierThree { nb, .. } => println!("\t{}\n", nb),
+            _ => (),
+          }
+        }
       } else {
         println!(
-          "\nThe closest matching command that can {} is \n\n\t{:?}",
+          "\nThe closest matching command that can \"{}\" is \n\n\t{:?}",
           cfg.search.join(" "),
           top_search.option.get_usage()
         );
+        match &top_search.option {
+          OptionValue::TierThree { nb, .. } => println!("\t{}\n", nb),
+          _ => (),
+        }
       }
     }
     None => (),
@@ -380,16 +397,17 @@ impl OptionValue {
 /// Welcome to the Git Explore CLI,
 /// where you can search for git commands with natural language
 ///
-/// EXAMPLE $ gitexplore compare two commits
+/// EXAMPLE:
+///
+/// $ gitexplore compare two commits
 ///           
 /// The closest matching command that can compare two commits is
 ///                  
 /// "git diff <sha1> <sha2> | less"
 pub struct Cli {
-  /// Activate debug mode
-  // short and long flags (-d, --debug) will be deduced from the field's name
+  /// Activate verbose mode
   #[structopt(short, long)]
-  pub debug: bool,
+  pub verbose: bool,
 
   /// The action or command you're looking for
   pub search_terms: Vec<String>,
