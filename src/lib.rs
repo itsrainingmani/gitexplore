@@ -180,10 +180,10 @@ impl Config {
     // Strip search term vector of articles - a, an, the
     let new_search_terms: Vec<String> = cli
       .search_terms
-      .clone()
       .iter()
+      .clone()
       .map(|x| x.to_lowercase())
-      .filter(|x| is_article(x))
+      .filter(|x| not_article(x))
       .collect();
 
     // We don't worry about the debug field in the Cli struct
@@ -194,8 +194,8 @@ impl Config {
   }
 }
 
-fn is_article(x: &String) -> bool {
-  return *x != "a" && *x != "an" && *x != "the";
+fn not_article(x: &String) -> bool {
+  *x != "a" && *x != "an" && *x != "the"
 }
 
 pub fn run(cfg: Config) -> Result<String, &'static str> {
