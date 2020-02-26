@@ -593,7 +593,7 @@
 				"value": "pattern",
 				"label": "by pattern",
 				"usage": "git branch | grep <regex pattern> | xargs git branch -D",
-				"nb": "e.g. git branch | grep \"-\" | xargs git branch -D will delete all branches that have \"-\" in their names or git branch | grep -v \"master\\|staging\" | xargs git branch -D will delete all branches except staging and master.\n\nAlways put your regex pattern in quotes"
+				"nb": "e.g. git branch | grep \"-\" | xargs git branch -D will delete all branches that have \"-\" in their names or git branch | grep -v \"master|staging\" | xargs git branch -D will delete all branches except staging and master.\n\nAlways put your regex pattern in quotes"
 			}
 		]
 	}

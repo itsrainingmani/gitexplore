@@ -272,10 +272,10 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) {
         .collect();
 
       if num_top_values.len() > 1 {
-        println!("\nLooks there is more than one command that matches what you searched for");
+        println!("\nLooks there is more than one command that matches what you searched for!");
         println!("\nEnumerating partially matching commands");
-        for top_val in num_top_values.iter() {
-          println!("\n\t{:?}", *top_val.get_usage());
+        for (i, top_val) in num_top_values.iter().enumerate() {
+          println!("\n\t{}. {:?}", i + 1, *top_val.get_usage());
           match &top_val {
             OptionValue::TierThree { nb, .. } => println!("\t{}\n", nb),
             _ => (),
@@ -283,7 +283,7 @@ fn second_pass<'a>(cfg: &'a Config, fp_res: &'a OptionValue) {
         }
       } else {
         println!(
-          "\nThe closest matching command that can \"{}\" is \n\n\t{:?}",
+          "\nMatching git cmd for \"{}\" found! 🎉 - \n\n\t{:?}",
           cfg.search.join(" "),
           top_search.option.get_usage()
         );
